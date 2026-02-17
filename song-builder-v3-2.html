@@ -1,0 +1,1785 @@
+<html data-type="html" data-identifier="song-builder-enhanced-v4" data-title="Song Section Builder v4 - Enhanced" data-version="1" width="1200" height="900"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<title>Song Section Builder v4 - Enhanced</title>
+<style>
+:root{
+  --panel:#121a26;
+  --panel2:#0f1622;
+  --text:#e7eefc;
+  --muted:#a9b6d3;
+  --accent:#6aa6ff;
+  --line:#243149;
+  --danger:#ff6a6a;
+  --ok:#4ade80;
+  --shadow:0 4px 12px rgba(0,0,0,.3);
+  --radius:10px;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  
+  /* Section colors */
+  --verse:#6aa6ff;
+  --chorus:#a855f7;
+  --prechorus:#ec4899;
+  --bridge:#f97316;
+  --break:#14b8a6;
+  --intro-outro:#4ade80;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{margin:0;font-family:var(--sans);background:linear-gradient(180deg,#070a10 0%,#0b0f17 40%,#070a10 100%);color:var(--text);min-height:100vh;}
+
+/* Toast notifications */
+.toast-container{position:fixed;top:80px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.4);transform:translateX(120%);opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);pointer-events:auto;display:flex;align-items:center;gap:8px;max-width:300px;}
+.toast.show{transform:translateX(0);opacity:1;}
+.toast.success{background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);color:#86efac;}
+.toast.error{background:rgba(255,106,106,.15);border:1px solid rgba(255,106,106,.4);color:#ffb3b3;}
+.toast.info{background:rgba(106,166,255,.15);border:1px solid rgba(106,166,255,.4);color:#93c5fd;}
+.toast-icon{font-size:16px;}
+
+header{padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(18,26,38,.85);backdrop-filter:blur(8px);position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+.header-left{flex:1;min-width:200px;}
+header h1{margin:0;font-size:15px;letter-spacing:.3px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--chorus));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+header .sub{margin-top:4px;color:var(--muted);font-size:11px;line-height:1.4;}
+
+/* Color Legend */
+.color-legend{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);}
+.legend-dot{width:8px;height:8px;border-radius:50%;}
+.legend-dot.intro-outro{background:var(--intro-outro);}
+.legend-dot.verse{background:var(--verse);}
+.legend-dot.prechorus{background:var(--prechorus);}
+.legend-dot.chorus{background:var(--chorus);}
+.legend-dot.bridge{background:var(--bridge);}
+.legend-dot.break{background:var(--break);}
+
+/* Keyboard shortcuts hint */
+.shortcuts-hint{display:none;font-size:10px;color:var(--muted);gap:8px;flex-wrap:wrap;margin-top:6px;}
+.shortcuts-hint kbd{background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;font-family:var(--mono);border:1px solid rgba(255,255,255,.12);}
+@media (min-width:768px){.shortcuts-hint{display:flex;}}
+
+/* Undo/Redo buttons */
+.undo-redo{display:flex;gap:4px;}
+.undo-redo button{padding:6px 10px;font-size:16px;min-height:36px;min-width:36px;}
+
+.wrap{display:grid;grid-template-columns:1fr;gap:12px;padding:12px;max-width:1750px;margin:0 auto;}
+
+@media (min-width:768px){
+  header{padding:14px 18px;}
+  header h1{font-size:16px;}
+  header .sub{font-size:12px;}
+  .wrap{gap:14px;padding:14px;}
+}
+
+@media (min-width:1100px){
+  .wrap{grid-template-columns:1.15fr .95fr 1.2fr;}
+}
+
+.card{background:rgba(18,26,38,.92);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px;}
+
+.titlebar{padding:10px 12px;border-bottom:1px solid var(--line);background:rgba(15,22,34,.9);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;}
+.title{font-weight:800;font-size:12px;color:var(--text);letter-spacing:.2px;}
+.hint{font-size:10px;color:var(--muted);margin-top:2px;}
+.pad{padding:10px;}
+
+@media (min-width:768px){
+  .titlebar{padding:12px;}
+  .title{font-size:13px;}
+  .hint{font-size:11px;}
+  .pad{padding:12px;}
+}
+
+.btnrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;}
+
+button{background:rgba(106,166,255,.15);color:var(--text);border:1px solid rgba(106,166,255,.35);border-radius:8px;padding:8px 12px;font-size:11px;font-weight:600;cursor:pointer;user-select:none;white-space:nowrap;transition:all .2s ease;min-height:36px;touch-action:manipulation;}
+button:hover:not(:disabled){background:rgba(106,166,255,.25);transform:translateY(-1px);}
+button:active:not(:disabled){transform:translateY(0);}
+button:disabled{opacity:.5;cursor:not-allowed;}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+button.secondary{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:var(--muted);}
+button.secondary:hover:not(:disabled){background:rgba(255,255,255,.12);}
+
+button.danger{background:rgba(255,106,106,.14);border-color:rgba(255,106,106,.35);color:#ffb3b3;}
+button.danger:hover:not(:disabled){background:rgba(255,106,106,.22);}
+
+button.ok{background:rgba(74,222,128,.14);border-color:rgba(74,222,128,.35);color:#86efac;}
+button.ok:hover:not(:disabled){background:rgba(74,222,128,.22);}
+
+button.mini{padding:6px 10px;font-size:10px;border-radius:6px;min-height:30px;}
+
+/* Larger touch targets on mobile */
+@media (max-width:639px){
+  button.mini{min-height:40px;min-width:40px;padding:8px 12px;}
+  .item-controls button.mini{min-width:44px;min-height:44px;font-size:14px;}
+}
+
+@media (min-width:768px){
+  button{font-size:12px;padding:8px 14px;}
+  button.mini{padding:6px 10px;font-size:11px;}
+}
+
+.small{font-size:10px;color:var(--muted);line-height:1.4;}
+@media (min-width:768px){.small{font-size:11px;}}
+
+.mono{font-family:var(--mono);}
+
+.section-grid{display:grid;gap:10px;}
+
+/* Section color coding */
+details.group-intro-outro{border-color:rgba(74,222,128,.3);}
+details.group-intro-outro summary{background:linear-gradient(90deg,rgba(74,222,128,.08),transparent);}
+details.group-intro-outro summary .title-dot{background:var(--intro-outro);}
+
+details.group-verse{border-color:rgba(106,166,255,.3);}
+details.group-verse summary{background:linear-gradient(90deg,rgba(106,166,255,.08),transparent);}
+details.group-verse summary .title-dot{background:var(--verse);}
+
+details.group-chorus{border-color:rgba(168,85,247,.3);}
+details.group-chorus summary{background:linear-gradient(90deg,rgba(168,85,247,.08),transparent);}
+details.group-chorus summary .title-dot{background:var(--chorus);}
+
+details.group-prechorus{border-color:rgba(236,72,153,.3);}
+details.group-prechorus summary{background:linear-gradient(90deg,rgba(236,72,153,.08),transparent);}
+details.group-prechorus summary .title-dot{background:var(--prechorus);}
+
+details.group-bridge{border-color:rgba(249,115,22,.3);}
+details.group-bridge summary{background:linear-gradient(90deg,rgba(249,115,22,.08),transparent);}
+details.group-bridge summary .title-dot{background:var(--bridge);}
+
+details.group-break{border-color:rgba(20,184,166,.3);}
+details.group-break summary{background:linear-gradient(90deg,rgba(20,184,166,.08),transparent);}
+details.group-break summary .title-dot{background:var(--break);}
+
+details{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:rgba(15,22,34,.55);margin-bottom:10px;}
+
+summary{cursor:pointer;padding:10px;font-weight:800;font-size:11px;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;user-select:none;transition:background .2s ease;}
+summary::-webkit-details-marker{display:none;}
+summary:hover{background:rgba(255,255,255,.03);}
+summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+
+.title-with-dot{display:flex;align-items:center;gap:8px;}
+.title-dot{width:8px;height:8px;border-radius:50%;box-shadow:0 0 8px currentColor;}
+
+/* Rotating chevron */
+.chevron{transition:transform .2s ease;font-size:10px;opacity:.6;}
+details[open] .chevron{transform:rotate(180deg);}
+
+@media (min-width:768px){
+  summary{font-size:12px;padding:10px 12px;}
+  .title-dot{width:10px;height:10px;}
+}
+
+.detailpad{padding:10px;border-top:1px solid var(--line);display:grid;gap:10px;}
+.sumright{display:flex;gap:8px;align-items:center;color:var(--muted);font-weight:600;font-size:10px;font-family:var(--mono);}
+
+@media (min-width:768px){.sumright{font-size:11px;}}
+
+label{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:11px;color:var(--muted);margin-bottom:6px;flex-wrap:wrap;}
+label span strong{color:var(--text);font-weight:800;}
+
+/* Copy A→B button */
+.copy-variant-btn{font-size:9px;padding:2px 6px;min-height:auto;opacity:.7;margin-left:8px;}
+.copy-variant-btn:hover{opacity:1;}
+
+.editorwrap{display:grid;grid-template-columns:1fr;gap:8px;align-items:stretch;}
+
+@media (min-width:640px){
+  .editorwrap{grid-template-columns:1fr 64px;}
+}
+
+textarea{width:100%;min-height:80px;resize:vertical;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;outline:none;font-family:var(--mono);font-size:11px;line-height:1.4;white-space:pre;overflow:auto;}
+textarea:focus{border-color:rgba(106,166,255,.7);box-shadow:0 0 0 3px rgba(106,166,255,.15);}
+textarea[wrap="off"]{overflow:auto;}
+
+@media (min-width:768px){
+  textarea{font-size:12px;min-height:92px;}
+}
+
+.lineMeta{border:1px solid var(--line);border-radius:8px;background:rgba(15,22,34,.35);padding:10px 6px;font-family:var(--mono);font-size:11px;line-height:1.4;color:var(--muted);overflow:hidden;display:none;}
+.lineMeta .n{display:block;text-align:right;height:1.4em;}
+
+@media (min-width:640px){
+  .lineMeta{display:block;font-size:12px;}
+}
+
+/* Stack */
+.stack{list-style:none;padding:8px;margin:0;display:grid;gap:8px;min-height:180px;border:1px solid var(--line);border-radius:10px;background:rgba(15,22,34,.35);}
+
+@media (min-width:768px){
+  .stack{padding:10px;min-height:220px;}
+}
+
+.stack li{border:1px solid var(--line);background:rgba(15,22,34,.7);border-radius:10px;padding:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;transition:all .15s ease;}
+.stack li.dragging{opacity:.6;outline:2px dashed rgba(106,166,255,.55);outline-offset:2px;}
+.stack li:focus-within{border-color:rgba(106,166,255,.5);}
+
+@media (min-width:768px){
+  .stack li{padding:10px;flex-wrap:nowrap;}
+}
+
+/* Color-coded stack items */
+.stack li[data-base="intro"],.stack li[data-base="outro"]{border-left:3px solid var(--intro-outro);background:linear-gradient(90deg,rgba(74,222,128,.08),rgba(15,22,34,.7));}
+.stack li[data-base="verse"]{border-left:3px solid var(--verse);background:linear-gradient(90deg,rgba(106,166,255,.08),rgba(15,22,34,.7));}
+.stack li[data-base="chorus"]{border-left:3px solid var(--chorus);background:linear-gradient(90deg,rgba(168,85,247,.08),rgba(15,22,34,.7));}
+.stack li[data-base="prechorus"]{border-left:3px solid var(--prechorus);background:linear-gradient(90deg,rgba(236,72,153,.08),rgba(15,22,34,.7));}
+.stack li[data-base="bridge"]{border-left:3px solid var(--bridge);background:linear-gradient(90deg,rgba(249,115,22,.08),rgba(15,22,34,.7));}
+.stack li[data-base="break"]{border-left:3px solid var(--break);background:linear-gradient(90deg,rgba(20,184,166,.08),rgba(15,22,34,.7));}
+
+.item-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1;}
+.grip{width:20px;height:20px;border-radius:5px;border:1px solid rgba(255,255,255,.15);background:radial-gradient(circle at 25% 25%,rgba(255,255,255,.35) 0 2px,transparent 2px),radial-gradient(circle at 75% 25%,rgba(255,255,255,.35) 0 2px,transparent 2px),radial-gradient(circle at 25% 75%,rgba(255,255,255,.35) 0 2px,transparent 2px),radial-gradient(circle at 75% 75%,rgba(255,255,255,.35) 0 2px,transparent 2px);opacity:.8;flex-shrink:0;cursor:grab;transition:all .15s ease;}
+.grip:hover{background:radial-gradient(circle at 25% 25%,rgba(106,166,255,.6) 0 2px,transparent 2px),radial-gradient(circle at 75% 25%,rgba(106,166,255,.6) 0 2px,transparent 2px),radial-gradient(circle at 25% 75%,rgba(106,166,255,.6) 0 2px,transparent 2px),radial-gradient(circle at 75% 75%,rgba(106,166,255,.6) 0 2px,transparent 2px);border-color:rgba(106,166,255,.4);}
+.grip:active{cursor:grabbing;}
+
+@media (min-width:768px){
+  .grip{width:22px;height:22px;}
+}
+
+.badge{font-size:10px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:var(--text);white-space:nowrap;}
+.badge small{color:var(--muted);font-weight:700;margin-left:4px;font-size:9px;}
+
+@media (min-width:768px){
+  .badge{font-size:11px;}
+  .badge small{font-size:10px;}
+}
+
+.item-controls{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0;}
+
+@media (min-width:640px){
+  .item-controls{gap:6px;}
+}
+
+/* Options */
+.opts{display:grid;gap:10px;margin-top:10px;}
+.opt{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:11px;flex-wrap:wrap;}
+.opt input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);flex-shrink:0;cursor:pointer;}
+.opt input[type=number]{width:70px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-family:var(--mono);font-size:11px;}
+.opt select{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:11px;outline:none;}
+
+@media (min-width:768px){
+  .opt{font-size:12px;}
+  .opt input[type=number],.opt select{font-size:12px;}
+}
+
+/* Output */
+.outbox{display:grid;gap:10px;}
+.outbox textarea{min-height:200px;}
+
+@media (min-width:768px){
+  .outbox textarea{min-height:300px;}
+}
+
+.footerbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding:10px;background:rgba(15,22,34,.75);}
+
+@media (min-width:768px){
+  .footerbar{padding:10px 12px;}
+}
+
+/* Module */
+.module{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:rgba(15,22,34,.55);margin-bottom:10px;}
+.module .bar{padding:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.module .bar .title{font-weight:800;font-size:11px;letter-spacing:.2px;}
+.module .body{padding:10px;display:grid;gap:10px;}
+
+@media (min-width:768px){
+  .module .bar{padding:10px 12px;}
+  .module .bar .title{font-size:12px;}
+  .module .body{padding:10px 12px;}
+}
+
+.tools input[type=text],.style input[type=text],.songmeta input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-family:var(--mono);font-size:11px;outline:none;transition:border-color .2s ease;}
+.tools input[type=text]:focus,.style input[type=text]:focus,.songmeta input[type=text]:focus{border-color:rgba(106,166,255,.7);box-shadow:0 0 0 3px rgba(106,166,255,.15);}
+
+@media (min-width:768px){
+  .tools input[type=text],.style input[type=text],.songmeta input[type=text]{font-size:12px;}
+}
+
+.tools .row,.style .row,.songmeta .row{display:grid;grid-template-columns:1fr;gap:8px;align-items:stretch;}
+
+@media (min-width:500px){
+  .tools .row,.style .row,.songmeta .row{grid-template-columns:1fr 1fr;}
+  .tools .row,.style .row,.songmeta .row{align-items:center;}
+}
+
+.tools .results{max-height:160px;overflow:auto;border:1px solid var(--line);border-radius:8px;background:rgba(15,22,34,.35);padding:6px;display:grid;gap:6px;scrollbar-width:thin;scrollbar-color:rgba(106,166,255,.3) transparent;}
+
+@media (min-width:768px){
+  .tools .results{max-height:180px;padding:8px;}
+}
+
+.pill{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.05);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .2s ease;}
+.pill:hover{background:rgba(106,166,255,.10);border-color:rgba(106,166,255,.22);transform:translateX(2px);}
+.pill:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.pill .meta{color:var(--muted);font-size:10px;white-space:nowrap;font-family:var(--sans);}
+
+@media (min-width:768px){
+  .pill{font-size:12px;}
+  .pill .meta{font-size:11px;}
+}
+
+/* Chip scroll snap */
+.chipRow{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 6px 2px;scrollbar-width:thin;scrollbar-color:rgba(106,166,255,.3) transparent;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:var(--text);font-size:10px;white-space:nowrap;cursor:pointer;user-select:none;transition:all .2s ease;touch-action:manipulation;scroll-snap-align:start;}
+.chip:hover{border-color:rgba(106,166,255,.35);background:rgba(106,166,255,.10);transform:scale(1.05);}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.chip.on{border-color:rgba(74,222,128,.45);background:rgba(74,222,128,.12);box-shadow:0 0 8px rgba(74,222,128,.2);}
+.chip .x{font-weight:900;color:rgba(255,255,255,.65);}
+
+@media (min-width:768px){
+  .chip{font-size:11px;padding:7px 12px;}
+}
+
+.gearSummary{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;}
+
+input[type="file"]{display:none;}
+
+/* Scroll improvements */
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:rgba(0,0,0,.2);}
+::-webkit-scrollbar-thumb{background:rgba(106,166,255,.3);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(106,166,255,.5);}
+
+/* Loading states */
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+.loading{animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite;}
+
+/* Screen reader only */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+/* Live region for announcements */
+#announcer{position:absolute;left:-9999px;}
+</style>
+</head>
+<body>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Screen reader announcements -->
+<div id="announcer" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<header>
+  <div class="header-top">
+    <div class="header-left">
+      <h1 id="app-title">Song Section Builder v4 Enhanced</h1>
+      <div class="sub" id="app-subtitle">Mobile-friendly • Color-coded • Undo/Redo • Keyboard shortcuts</div>
+      
+      <!-- Color Legend -->
+      <div class="color-legend">
+        <div class="legend-item"><div class="legend-dot intro-outro"></div>Intro/Outro</div>
+        <div class="legend-item"><div class="legend-dot verse"></div>Verse</div>
+        <div class="legend-item"><div class="legend-dot prechorus"></div>Pre-Chorus</div>
+        <div class="legend-item"><div class="legend-dot chorus"></div>Chorus</div>
+        <div class="legend-item"><div class="legend-dot bridge"></div>Bridge</div>
+        <div class="legend-item"><div class="legend-dot break"></div>Break</div>
+      </div>
+      
+      <!-- Keyboard shortcuts hint -->
+      <div class="shortcuts-hint">
+        <span><kbd>Ctrl</kbd>+<kbd>S</kbd> Save</span>
+        <span><kbd>Ctrl</kbd>+<kbd>Z</kbd> Undo</span>
+        <span><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> Redo</span>
+      </div>
+    </div>
+    
+    <!-- Undo/Redo buttons -->
+    <div class="undo-redo">
+      <button id="undoBtn" class="secondary" aria-label="Undo" title="Undo (Ctrl+Z)" disabled="">↶</button>
+      <button id="redoBtn" class="secondary" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled="">↷</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- LEFT: SECTIONS -->
+  <section class="card" id="sectionsCard">
+    <div class="titlebar">
+      <div style="flex:1;min-width:0;">
+        <div class="title">📝 Sections</div>
+        <div class="hint">Write variants • Color-coded by type</div>
+      </div>
+      <div class="btnrow">
+        <button class="secondary mini" id="clearSectionsBtn" aria-label="Clear all section text">Clear text</button>
+        <button class="danger mini" id="resetAllBtn" aria-label="Reset everything to defaults">Reset all</button>
+      </div>
+    </div>
+    <div class="pad">
+      <div class="section-grid" id="sectionGroups"></div>
+      <div class="small">💡 Syllable counts are approximate estimates per line</div>
+    </div>
+  </section>
+
+  <!-- MIDDLE: WORD TOOLS + ARRANGEMENT + OPTIONS -->
+  <section class="card" id="middleCard">
+    <div class="titlebar">
+      <div style="flex:1;min-width:0;">
+        <div class="title">🔧 Tools &amp; Arrangement</div>
+        <div class="hint">Word search • Drag to reorder</div>
+      </div>
+      <div class="btnrow">
+        <button class="secondary mini" id="clearStackBtn" aria-label="Clear arrangement stack">Clear stack</button>
+      </div>
+    </div>
+
+    <div class="pad" style="display:grid;gap:12px;">
+
+      <!-- WORD TOOLS -->
+      <div class="module tools" id="wordTools">
+        <div class="bar">
+          <div class="title">🔤 Word tools (Datamuse)</div>
+          <div class="small">Rhymes • Thesaurus • Sounds-like</div>
+        </div>
+        <div class="body">
+          <div class="small">💡 Highlight a word in any textarea, then press Use selection</div>
+          <div class="row">
+            <button class="secondary" id="useSelectionBtn" aria-label="Use selected text as search query">Use selection</button>
+            <select id="toolMode" aria-label="Search mode">
+              <option value="rel_rhy">Rhymes</option>
+              <option value="rel_nry">Near rhymes</option>
+              <option value="ml">Thesaurus (means like)</option>
+              <option value="sl">Sounds like</option>
+            </select>
+          </div>
+          <input type="text" id="toolQuery" placeholder="Type a word (e.g., night)" aria-label="Word to search">
+          <div class="btnrow" style="justify-content:flex-start;">
+            <button id="toolSearchBtn" aria-label="Search for words">Search</button>
+            <button class="secondary" id="toolClearBtn" aria-label="Clear search results">Clear</button>
+          </div>
+          <div class="results" id="toolResults" role="listbox" aria-label="Search results"></div>
+        </div>
+      </div>
+
+      <!-- ARRANGEMENT -->
+      <div class="module" id="arrangement">
+        <div class="bar">
+          <div class="title">📑 Arrangement stack</div>
+          <div class="small">Drag to reorder • Duplicate • Presets</div>
+        </div>
+        <div class="body">
+          <div class="opt">
+            <span style="min-width:100px;font-weight:700;">Preset:</span>
+            <select id="presetSelect" aria-label="Load arrangement preset">
+              <option value="">Choose a preset…</option>
+            </select>
+          </div>
+          <div class="btnrow" style="justify-content:flex-start;flex-wrap:wrap;" id="addButtons"></div>
+          <ul class="stack" id="stackList" role="list" aria-label="Song arrangement"></ul>
+        </div>
+      </div>
+
+      <!-- OUTPUT OPTIONS (COLLAPSED) -->
+      <details class="module" id="optionsDetails">
+        <summary class="bar gearSummary">
+          <div class="title">⚙️ Output options</div>
+          <div class="small"><span class="chevron">▼</span> tap to expand</div>
+        </summary>
+        <div class="body opts">
+          <div class="opt"><input type="checkbox" id="opt_labels" checked=""><label for="opt_labels" style="margin:0;color:var(--muted);flex:1;">Include bracket labels [Verse] [Chorus]</label></div>
+          <div class="opt"><input type="checkbox" id="opt_wrap" checked=""><label for="opt_wrap" style="margin:0;color:var(--muted);flex:1;">Wrap with [Intro] and [Outro]</label></div>
+          <div class="opt"><input type="checkbox" id="opt_blankline" checked=""><label for="opt_blankline" style="margin:0;color:var(--muted);flex:1;">Blank line between sections</label></div>
+          <div class="opt"><input type="checkbox" id="opt_sanitize" checked=""><label for="opt_sanitize" style="margin:0;color:var(--muted);flex:1;">Sanitize punctuation (smart quotes)</label></div>
+          <div class="opt"><input type="checkbox" id="opt_trim" checked=""><label for="opt_trim" style="margin:0;color:var(--muted);flex:1;">Trim extra whitespace</label></div>
+          <div class="opt" style="grid-template-columns:auto 1fr auto;display:grid;"><span>Max blank lines:</span><input type="number" id="opt_maxblank" value="1" min="0" max="3" aria-label="Maximum blank lines"><span class="small">(0-3)</span></div>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <!-- RIGHT: SONG META + STYLE + OUTPUT -->
+  <section class="card" id="outputCard">
+    <div class="titlebar">
+      <div style="flex:1;min-width:0;">
+        <div class="title">💾 Export</div>
+        <div class="hint">Song metadata • Style tags • Final lyrics</div>
+      </div>
+      <div class="btnrow">
+        <button class="secondary mini" id="loadJsonBtn" aria-label="Load from JSON file">Load JSON</button>
+        <button class="secondary mini" id="saveJsonBtn" aria-label="Save to JSON file">Save JSON</button>
+      </div>
+    </div>
+
+    <div class="pad" style="display:grid;gap:12px;">
+
+      <!-- SONG ID + TITLE -->
+      <div class="module songmeta" id="songMeta">
+        <div class="bar">
+          <div class="title">🎵 Song title &amp; ID</div>
+          <div class="small">Auto-generate timestamp ID</div>
+        </div>
+        <div class="body">
+          <input type="text" id="songTitle" placeholder="Song title (e.g., Fix It In Post)" aria-label="Song title">
+          <div class="row">
+            <button id="genIdBtn" aria-label="Generate song ID">Generate Song ID</button>
+            <button class="secondary" id="copyIdBtn" aria-label="Copy song ID to clipboard">Copy ID</button>
+          </div>
+          <input type="text" id="songId" readonly="" placeholder="Song ID will appear here" aria-label="Generated song ID">
+          <div class="small">Format: YYYYMMDDHHMM + space + title</div>
+        </div>
+      </div>
+
+      <!-- STYLE CHIPS -->
+      <div class="module style" id="styleModule">
+        <div class="bar">
+          <div class="title">🎨 Style tags</div>
+          <div class="small">Build your style library</div>
+        </div>
+        <div class="body">
+          <div class="row">
+            <input type="text" id="styleInput" placeholder="Add style tag (e.g., Upbeat)" aria-label="New style tag">
+            <button id="addStyleBtn" aria-label="Add style tag">Add</button>
+          </div>
+
+          <div class="small">✓ Current selection (tap to remove):</div>
+          <div class="chipRow" id="styleSelected" role="listbox" aria-label="Selected styles"></div>
+
+          <div class="small">📚 Library (tap to toggle):</div>
+          <div class="chipRow" id="styleLibrary" role="listbox" aria-label="Style library"></div>
+
+          <div class="row">
+            <button class="secondary" id="copyStyleBtn" aria-label="Copy style string to clipboard">Copy Style</button>
+            <button class="secondary" id="clearStyleBtn" aria-label="Clear style selection">Clear selection</button>
+          </div>
+
+          <input type="text" id="styleString" readonly="" placeholder="Comma-separated style appears here" aria-label="Style string">
+        </div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="module" id="lyricsModule">
+        <div class="bar">
+          <div class="title">📄 Final lyrics</div>
+          <div class="small">Ready to copy or download</div>
+        </div>
+        <div class="body outbox">
+          <div class="btnrow" style="justify-content:flex-start;">
+            <button class="ok" id="copyLyricsBtn" aria-label="Copy lyrics to clipboard">Copy Lyrics</button>
+            <button class="secondary" id="downloadTxtBtn" aria-label="Download lyrics as text file">Download .txt</button>
+          </div>
+          <textarea id="output" readonly="" aria-label="Generated lyrics output"></textarea>
+          <div class="small">💡 Save JSON to preserve editable state + output snapshot</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footerbar">
+      <div class="small">💾 Auto-saved locally in browser</div>
+      <div class="small mono" id="status"></div>
+    </div>
+
+    <input type="file" id="jsonFile" accept="application/json,.json">
+
+  </section>
+</div>
+
+<script>
+// -------------------------
+// Definitions
+// -------------------------
+const BASE_LABELS = {intro:"Intro",verse:"Verse",prechorus:"Pre-Chorus",chorus:"Chorus",bridge:"Bridge",break:"Break",outro:"Outro"};
+
+const SECTION_DEFS = [
+  {key:"intro",base:"intro",display:"Intro",variant:null,group:"Intro/Outro"},
+  {key:"outro",base:"outro",display:"Outro",variant:null,group:"Intro/Outro"},
+  {key:"verse_a",base:"verse",display:"Verse A",variant:"A",group:"Verse"},
+  {key:"verse_b",base:"verse",display:"Verse B",variant:"B",group:"Verse"},
+  {key:"prechorus_a",base:"prechorus",display:"Pre-Chorus A",variant:"A",group:"Pre-Chorus"},
+  {key:"prechorus_b",base:"prechorus",display:"Pre-Chorus B",variant:"B",group:"Pre-Chorus"},
+  {key:"chorus_a",base:"chorus",display:"Chorus A",variant:"A",group:"Chorus"},
+  {key:"chorus_b",base:"chorus",display:"Chorus B",variant:"B",group:"Chorus"},
+  {key:"bridge_a",base:"bridge",display:"Bridge A",variant:"A",group:"Bridge"},
+  {key:"bridge_b",base:"bridge",display:"Bridge B",variant:"B",group:"Bridge"},
+  {key:"break_a",base:"break",display:"Break A",variant:"A",group:"Break"},
+  {key:"break_b",base:"break",display:"Break B",variant:"B",group:"Break"}
+];
+
+const ADD_BUTTONS = [
+  {key:"intro",label:"Intro"},{key:"verse_a",label:"Verse A"},{key:"verse_b",label:"Verse B"},
+  {key:"prechorus_a",label:"Pre A"},{key:"prechorus_b",label:"Pre B"},
+  {key:"chorus_a",label:"Chorus A"},{key:"chorus_b",label:"Chorus B"},
+  {key:"bridge_a",label:"Bridge A"},{key:"bridge_b",label:"Bridge B"},
+  {key:"break_a",label:"Break A"},{key:"break_b",label:"Break B"},{key:"outro",label:"Outro"}
+];
+
+const PRESETS = [
+  {id:"pop_basic",name:"Pop Standard (A/B)",stack:["verse_a","verse_b","prechorus_a","chorus_a","verse_b","prechorus_a","chorus_a","bridge_a","chorus_a"]},
+  {id:"simple_vcvc",name:"Simple (V C V C)",stack:["verse_a","chorus_a","verse_b","chorus_a"]},
+  {id:"hook_heavy",name:"Hook Heavy (V V C C B C)",stack:["verse_a","verse_b","chorus_a","chorus_a","bridge_a","chorus_a"]},
+  {id:"cinematic",name:"Cinematic (I V B C O)",stack:["intro","verse_a","bridge_a","chorus_a","outro"]}
+];
+
+// -------------------------
+// Elements
+// -------------------------
+const els = {
+  sectionGroups:document.getElementById("sectionGroups"),
+  clearSectionsBtn:document.getElementById("clearSectionsBtn"),
+  resetAllBtn:document.getElementById("resetAllBtn"),
+  addButtons:document.getElementById("addButtons"),
+  presetSelect:document.getElementById("presetSelect"),
+  stackList:document.getElementById("stackList"),
+  clearStackBtn:document.getElementById("clearStackBtn"),
+  optLabels:document.getElementById("opt_labels"),
+  optWrap:document.getElementById("opt_wrap"),
+  optBlankLine:document.getElementById("opt_blankline"),
+  optSanitize:document.getElementById("opt_sanitize"),
+  optTrim:document.getElementById("opt_trim"),
+  optMaxBlank:document.getElementById("opt_maxblank"),
+  toolMode:document.getElementById("toolMode"),
+  toolQuery:document.getElementById("toolQuery"),
+  toolSearchBtn:document.getElementById("toolSearchBtn"),
+  toolClearBtn:document.getElementById("toolClearBtn"),
+  toolResults:document.getElementById("toolResults"),
+  useSelectionBtn:document.getElementById("useSelectionBtn"),
+  songTitle:document.getElementById("songTitle"),
+  songId:document.getElementById("songId"),
+  genIdBtn:document.getElementById("genIdBtn"),
+  copyIdBtn:document.getElementById("copyIdBtn"),
+  styleInput:document.getElementById("styleInput"),
+  addStyleBtn:document.getElementById("addStyleBtn"),
+  styleSelected:document.getElementById("styleSelected"),
+  styleLibrary:document.getElementById("styleLibrary"),
+  copyStyleBtn:document.getElementById("copyStyleBtn"),
+  clearStyleBtn:document.getElementById("clearStyleBtn"),
+  styleString:document.getElementById("styleString"),
+  output:document.getElementById("output"),
+  copyLyricsBtn:document.getElementById("copyLyricsBtn"),
+  downloadTxtBtn:document.getElementById("downloadTxtBtn"),
+  saveJsonBtn:document.getElementById("saveJsonBtn"),
+  loadJsonBtn:document.getElementById("loadJsonBtn"),
+  jsonFile:document.getElementById("jsonFile"),
+  status:document.getElementById("status"),
+  undoBtn:document.getElementById("undoBtn"),
+  redoBtn:document.getElementById("redoBtn"),
+  toastContainer:document.getElementById("toastContainer"),
+  announcer:document.getElementById("announcer")
+};
+
+// -------------------------
+// Storage keys
+// -------------------------
+const STORAGE_KEY = "song_section_builder_v4";
+const STYLE_LIB_KEY = "song_section_builder_style_library";
+
+let activeTextarea = null;
+
+// -------------------------
+// Undo/Redo History
+// -------------------------
+const MAX_HISTORY = 50;
+let undoStack = [];
+let redoStack = [];
+
+function deepClone(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function saveToHistory() {
+  const snapshot = deepClone(state);
+  undoStack.push(snapshot);
+  if (undoStack.length > MAX_HISTORY) undoStack.shift();
+  redoStack = [];
+  updateUndoRedoButtons();
+}
+
+function undo() {
+  if (undoStack.length === 0) return;
+  const current = deepClone(state);
+  redoStack.push(current);
+  const previous = undoStack.pop();
+  state = previous;
+  refreshUI();
+  updateUndoRedoButtons();
+  showToast("Undone", "info");
+  announce("Undo performed");
+}
+
+function redo() {
+  if (redoStack.length === 0) return;
+  const current = deepClone(state);
+  undoStack.push(current);
+  const next = redoStack.pop();
+  state = next;
+  refreshUI();
+  updateUndoRedoButtons();
+  showToast("Redone", "info");
+  announce("Redo performed");
+}
+
+function updateUndoRedoButtons() {
+  els.undoBtn.disabled = undoStack.length === 0;
+  els.redoBtn.disabled = redoStack.length === 0;
+}
+
+function refreshUI() {
+  els.songTitle.value = state.songTitle || "";
+  els.songId.value = state.songId || "";
+  els.optLabels.checked = !!state.options.labels;
+  els.optWrap.checked = !!state.options.wrapIntroOutro;
+  els.optBlankLine.checked = !!state.options.blankLine;
+  els.optSanitize.checked = !!state.options.sanitize;
+  els.optTrim.checked = !!state.options.trim;
+  els.optMaxBlank.value = Number(state.options.maxBlank ?? 1);
+  
+  // Update textareas
+  for (const d of SECTION_DEFS) {
+    const ta = document.getElementById("sec_" + d.key);
+    if (ta) ta.value = state.sections[d.key] || "";
+    updateSectionMeta(d.key);
+  }
+  updateGroupMeta();
+  renderStack();
+  buildOutput();
+  setStyleString();
+  renderStyle();
+  saveLocal();
+}
+
+// -------------------------
+// Toast Notifications
+// -------------------------
+function showToast(message, type = "success") {
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  
+  const icons = { success: "✓", error: "✕", info: "ℹ" };
+  toast.innerHTML = `<span class="toast-icon">${icons[type] || icons.info}</span><span>${message}</span>`;
+  
+  els.toastContainer.appendChild(toast);
+  
+  requestAnimationFrame(() => {
+    toast.classList.add("show");
+  });
+  
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
+
+// -------------------------
+// Screen Reader Announcements
+// -------------------------
+function announce(message) {
+  els.announcer.textContent = message;
+  setTimeout(() => { els.announcer.textContent = ""; }, 1000);
+}
+
+// -------------------------
+// State
+// -------------------------
+function blankSections(){const o={}; for(const d of SECTION_DEFS) o[d.key]=""; return o;}
+
+let state = {
+  version: 4,
+  songTitle: "",
+  songId: "",
+  styleSelected: [],
+  sections: blankSections(),
+  stack: [{id:crypto.randomUUID(),key:"verse_a"},{id:crypto.randomUUID(),key:"chorus_a"}],
+  options: {labels:true,wrapIntroOutro:true,blankLine:true,sanitize:true,trim:true,maxBlank:1}
+};
+
+let styleLibrary = [];
+
+// -------------------------
+// Utility
+// -------------------------
+function setStatus(msg,good=true){
+  els.status.textContent=msg;
+  els.status.style.color=good?"rgba(74,222,128,.9)":"rgba(255,106,106,.9)";
+  clearTimeout(setStatus._t);
+  setStatus._t=setTimeout(()=>{els.status.textContent="";},1600);
+}
+
+function safeFilename(name){
+  const s=(name||"").toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");
+  return s || "song";
+}
+
+async function copyToClipboard(text){
+  try{await navigator.clipboard.writeText(text);return true;}
+  catch(e){
+    const t=document.createElement("textarea");
+    t.value=text;
+    document.body.appendChild(t);
+    t.select();
+    const ok=document.execCommand("copy");
+    t.remove();
+    return ok;
+  }
+}
+
+function saveLocal(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}
+  try{localStorage.setItem(STYLE_LIB_KEY,JSON.stringify(styleLibrary));}catch(e){}
+}
+
+function loadLocal(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const p=JSON.parse(raw);
+      if(p && p.sections && p.stack && p.options){
+        state = {...state, ...p};
+        for(const d of SECTION_DEFS){ if(!(d.key in state.sections)) state.sections[d.key]=""; }
+        if(!Array.isArray(state.styleSelected)) state.styleSelected=[];
+      }
+    }
+  }catch(e){}
+
+  try{
+    const rawLib=localStorage.getItem(STYLE_LIB_KEY);
+    if(rawLib){
+      const p=JSON.parse(rawLib);
+      if(Array.isArray(p)) styleLibrary = p;
+    }
+  }catch(e){}
+}
+
+function sanitizeText(t){
+  return (t||"")
+    .replace(/[""]/g,'"')
+    .replace(/['']/g,"'")
+    .replace(/[—–]/g,"-")
+    .replace(/\u00a0/g," ");
+}
+
+function trimAndClampBlankLines(text,maxBlank){
+  let t=(text||"").replace(/\r\n/g,"\n");
+  t=t.replace(/[ \t]+\n/g,"\n");
+  if(maxBlank===0){
+    t=t.replace(/\n\s*\n/g,"\n");
+  }else{
+    const re=new RegExp("(\\n\\s*){"+(maxBlank+2)+",}","g");
+    const rep="\n"+"\n".repeat(maxBlank);
+    t=t.replace(re,rep);
+  }
+  return t.trim();
+}
+
+function countNonEmptyLines(text){
+  return (text||"").split(/\r?\n/).filter(l=>l.trim().length>0).length;
+}
+
+function countWords(text){
+  return (text||"").split(/\s+/).filter(w=>w.trim().length>0).length;
+}
+
+// -------------------------
+// Syllable estimation
+// -------------------------
+function estimateWordSyllables(word){
+  let w=(word||"").toLowerCase().replace(/[^a-z]/g,"");
+  if(!w) return 0;
+  if(w.length<=3) return 1;
+  w=w.replace(/e$/,'');
+  const groups=w.match(/[aeiouy]+/g);
+  let count=groups?groups.length:1;
+  if(/[^aeiouy]le$/.test(w)) count+=1;
+  return Math.max(1,count);
+}
+
+function estimateLineSyllables(line){
+  const words=(line||"").split(/\s+/).map(x=>x.trim()).filter(Boolean);
+  let total=0;
+  for(const w of words) total+=estimateWordSyllables(w);
+  return total;
+}
+
+function estimateTextSyllables(text){
+  const lines=(text||"").replace(/\r\n/g,"\n").split("\n");
+  let total=0;
+  for(const line of lines){ total+=estimateLineSyllables(line); }
+  return total;
+}
+
+// -------------------------
+// Copy variant helper
+// -------------------------
+function copyVariantAtoB(group) {
+  const keyA = group.toLowerCase().replace(/[^a-z]/g, "") + "_a";
+  const keyB = group.toLowerCase().replace(/[^a-z]/g, "") + "_b";
+  
+  const defA = SECTION_DEFS.find(d => d.key === keyA);
+  const defB = SECTION_DEFS.find(d => d.key === keyB);
+  
+  if (!defA || !defB) return;
+  
+  saveToHistory();
+  state.sections[keyB] = state.sections[keyA] || "";
+  
+  const taB = document.getElementById("sec_" + keyB);
+  if (taB) taB.value = state.sections[keyB];
+  
+  updateSectionMeta(keyB);
+  updateGroupMeta();
+  buildOutput();
+  saveLocal();
+  showToast(`Copied ${defA.display} → ${defB.display}`, "success");
+  announce(`Copied ${defA.display} to ${defB.display}`);
+}
+
+// -------------------------
+// Sections rendering
+// -------------------------
+function buildSectionEditors(){
+  els.sectionGroups.innerHTML="";
+  const groups={};
+  for(const d of SECTION_DEFS){ if(!groups[d.group]) groups[d.group]=[]; groups[d.group].push(d); }
+  const groupOrder=["Intro/Outro","Verse","Pre-Chorus","Chorus","Bridge","Break"];
+
+  const groupClasses = {
+    "Intro/Outro":"group-intro-outro",
+    "Verse":"group-verse",
+    "Pre-Chorus":"group-prechorus",
+    "Chorus":"group-chorus",
+    "Bridge":"group-bridge",
+    "Break":"group-break"
+  };
+
+  for(const gname of groupOrder){
+    const defs=groups[gname];
+    if(!defs) continue;
+
+    const det=document.createElement("details");
+    det.open=(gname!=="Break");
+    det.className = groupClasses[gname] || "";
+
+    const sum=document.createElement("summary");
+    const left=document.createElement("div");
+    left.className="title-with-dot";
+    left.innerHTML = `<span class="title-dot"></span><span>${gname}</span>`;
+    const right=document.createElement("div"); right.className="sumright"; right.id="sum_"+gname.replace(/\W+/g,"_");
+    
+    // Add chevron
+    const chevron = document.createElement("span");
+    chevron.className = "chevron";
+    chevron.textContent = "▼";
+    right.appendChild(chevron);
+    
+    sum.appendChild(left); sum.appendChild(right);
+    det.appendChild(sum);
+
+    const pad=document.createElement("div"); pad.className="detailpad";
+    
+    // Add Copy A→B button for groups with variants
+    if (gname !== "Intro/Outro") {
+      const copyRow = document.createElement("div");
+      copyRow.style.cssText = "display:flex;justify-content:flex-end;margin-bottom:6px;";
+      const copyBtn = document.createElement("button");
+      copyBtn.className = "copy-variant-btn secondary mini";
+      copyBtn.textContent = "Copy A → B";
+      copyBtn.setAttribute("aria-label", `Copy ${gname} A to ${gname} B`);
+      copyBtn.addEventListener("click", () => copyVariantAtoB(gname));
+      copyRow.appendChild(copyBtn);
+      pad.appendChild(copyRow);
+    }
+
+    for(const d of defs){
+      const block=document.createElement("div");
+
+      const lbl=document.createElement("label");
+      const lspan=document.createElement("span"); lspan.innerHTML="<strong>"+d.display+"</strong>";
+      const rspan=document.createElement("span"); rspan.className="mono"; rspan.id="meta_"+d.key; rspan.textContent="0 ln • 0 wd • 0 sy";
+      lbl.appendChild(lspan); lbl.appendChild(rspan);
+
+      const wrap=document.createElement("div"); wrap.className="editorwrap";
+
+      const ta=document.createElement("textarea");
+      ta.id="sec_"+d.key;
+      ta.setAttribute("wrap","off");
+      ta.setAttribute("aria-label", d.display + " lyrics");
+      ta.placeholder=d.display+" lines...";
+      ta.value=state.sections[d.key]||"";
+
+      const meta=document.createElement("div");
+      meta.className="lineMeta";
+      meta.id="linemeta_"+d.key;
+
+      function update(saveHistory = false){
+        if (saveHistory) saveToHistory();
+        state.sections[d.key]=ta.value;
+        updateSectionMeta(d.key);
+        updateGroupMeta();
+        buildOutput();
+        saveLocal();
+      }
+
+      ta.addEventListener("focus",()=>{activeTextarea=ta;});
+      ta.addEventListener("mouseup",()=>{activeTextarea=ta;});
+      ta.addEventListener("keyup",()=>{activeTextarea=ta;});
+      ta.addEventListener("input",() => update(false));
+      ta.addEventListener("blur",() => { saveToHistory(); });
+      ta.addEventListener("scroll",()=>{ meta.scrollTop = ta.scrollTop; });
+
+      wrap.appendChild(ta);
+      wrap.appendChild(meta);
+
+      block.appendChild(lbl);
+      block.appendChild(wrap);
+      pad.appendChild(block);
+
+      updateSectionMeta(d.key);
+    }
+
+    det.appendChild(pad);
+    els.sectionGroups.appendChild(det);
+  }
+
+  updateGroupMeta();
+}
+
+function updateSectionMeta(key){
+  const text=state.sections[key]||"";
+  const lines=countNonEmptyLines(text);
+  const words=countWords(text);
+  const syll=estimateTextSyllables(text);
+
+  const meta=document.getElementById("meta_"+key);
+  if(meta) meta.textContent = lines + " ln • " + words + " wd • " + syll + " sy";
+
+  const box=document.getElementById("linemeta_"+key);
+  if(box){
+    const rawLines=(text||"").replace(/\r\n/g,"\n").split("\n");
+    const out=[];
+    for(const ln of rawLines){
+      const s = ln.trim().length ? estimateLineSyllables(ln) : "";
+      out.push("<span class='n'>"+s+"</span>");
+    }
+    while(out.length<3) out.push("<span class='n'></span>");
+    box.innerHTML = out.join("");
+  }
+}
+
+function updateGroupMeta(){
+  const groupOrder=["Intro/Outro","Verse","Pre-Chorus","Chorus","Bridge","Break"];
+  for(const gname of groupOrder){
+    const el=document.getElementById("sum_"+gname.replace(/\W+/g,"_"));
+    if(!el) continue;
+    const defs=SECTION_DEFS.filter(d=>d.group===gname);
+    let lines=0,words=0,syll=0;
+    for(const d of defs){
+      const t=state.sections[d.key]||"";
+      lines += countNonEmptyLines(t);
+      words += countWords(t);
+      syll += estimateTextSyllables(t);
+    }
+    // Keep chevron
+    const chevron = el.querySelector('.chevron');
+    el.textContent = lines + " ln • " + words + " wd • " + syll + " sy ";
+    if (chevron) el.appendChild(chevron);
+    else {
+      const newChevron = document.createElement("span");
+      newChevron.className = "chevron";
+      newChevron.textContent = "▼";
+      el.appendChild(newChevron);
+    }
+  }
+}
+
+// -------------------------
+// Arrangement
+// -------------------------
+function defByKey(key){ return SECTION_DEFS.find(d=>d.key===key); }
+
+function buildAddButtons(){
+  els.addButtons.innerHTML="";
+  for(const b of ADD_BUTTONS){
+    const btn=document.createElement("button");
+    btn.className="mini secondary";
+    btn.textContent="+ "+b.label;
+    btn.setAttribute("aria-label", "Add " + b.label + " to arrangement");
+    btn.addEventListener("click",()=>addToStack(b.key));
+    els.addButtons.appendChild(btn);
+  }
+}
+
+function buildPresetSelect(){
+  for(const p of PRESETS){
+    const opt=document.createElement("option");
+    opt.value=p.id;
+    opt.textContent=p.name;
+    els.presetSelect.appendChild(opt);
+  }
+  els.presetSelect.addEventListener("change",()=>{
+    const id=els.presetSelect.value;
+    if(!id) return;
+    const preset=PRESETS.find(p=>p.id===id);
+    if(!preset) return;
+    saveToHistory();
+    state.stack = preset.stack.map(k=>({id:crypto.randomUUID(),key:k}));
+    renderStack();
+    buildOutput();
+    saveLocal();
+    showToast("Preset loaded", "success");
+    announce("Preset " + preset.name + " loaded");
+    els.presetSelect.value="";
+  });
+}
+
+function addToStack(key){
+  saveToHistory();
+  state.stack.push({id:crypto.randomUUID(),key});
+  renderStack();
+  buildOutput();
+  saveLocal();
+  const d = defByKey(key);
+  showToast("Added " + (d ? d.display : key), "success");
+  announce("Added " + (d ? d.display : key) + " to arrangement");
+}
+
+function renderStack(){
+  els.stackList.innerHTML="";
+  state.stack.forEach((item,idx)=>{
+    const d=defByKey(item.key);
+    const display=d?d.display:item.key;
+
+    const li=document.createElement("li");
+    li.draggable=true;
+    li.dataset.id=item.id;
+    li.dataset.base=d?d.base:"";
+    li.setAttribute("role", "listitem");
+
+    const left=document.createElement("div"); left.className="item-left";
+    const grip=document.createElement("div"); grip.className="grip"; grip.setAttribute("aria-label", "Drag to reorder");
+    const badge=document.createElement("div"); badge.className="badge"; badge.textContent=display;
+    const small=document.createElement("small"); small.textContent="#"+(idx+1);
+    badge.appendChild(small);
+    left.appendChild(grip); left.appendChild(badge);
+
+    const controls=document.createElement("div"); controls.className="item-controls";
+
+    const dup=document.createElement("button"); dup.className="mini secondary"; dup.textContent="⧉"; dup.title="Duplicate";
+    dup.setAttribute("aria-label", "Duplicate " + display);
+    dup.addEventListener("click",()=>{ saveToHistory(); state.stack.splice(idx+1,0,{id:crypto.randomUUID(),key:item.key}); renderStack(); buildOutput(); saveLocal(); showToast("Duplicated", "success"); announce("Duplicated " + display); });
+
+    const up=document.createElement("button"); up.className="mini secondary"; up.textContent="↑"; up.disabled=(idx===0); up.title="Move up";
+    up.setAttribute("aria-label", "Move " + display + " up");
+    up.addEventListener("click",()=>{ if(idx===0) return; saveToHistory(); const tmp=state.stack[idx-1]; state.stack[idx-1]=state.stack[idx]; state.stack[idx]=tmp; renderStack(); buildOutput(); saveLocal(); announce("Moved " + display + " up"); });
+
+    const down=document.createElement("button"); down.className="mini secondary"; down.textContent="↓"; down.disabled=(idx===state.stack.length-1); down.title="Move down";
+    down.setAttribute("aria-label", "Move " + display + " down");
+    down.addEventListener("click",()=>{ if(idx===state.stack.length-1) return; saveToHistory(); const tmp=state.stack[idx+1]; state.stack[idx+1]=state.stack[idx]; state.stack[idx]=tmp; renderStack(); buildOutput(); saveLocal(); announce("Moved " + display + " down"); });
+
+    const del=document.createElement("button"); del.className="mini danger"; del.textContent="✕"; del.title="Remove";
+    del.setAttribute("aria-label", "Remove " + display);
+    del.addEventListener("click",()=>{ saveToHistory(); state.stack.splice(idx,1); renderStack(); buildOutput(); saveLocal(); showToast("Removed", "info"); announce("Removed " + display); });
+
+    controls.appendChild(dup); controls.appendChild(up); controls.appendChild(down); controls.appendChild(del);
+
+    li.appendChild(left); li.appendChild(controls);
+
+    li.addEventListener("dragstart",e=>{ li.classList.add("dragging"); e.dataTransfer.setData("text/plain",item.id); e.dataTransfer.effectAllowed="move"; });
+    li.addEventListener("dragend",()=>{ li.classList.remove("dragging"); });
+
+    els.stackList.appendChild(li);
+  });
+}
+
+function wireDragContainer(){
+  els.stackList.addEventListener("dragover",e=>{
+    e.preventDefault();
+    const dragging=els.stackList.querySelector(".dragging");
+    const afterEl=getDragAfterElement(els.stackList,e.clientY);
+    if(!dragging) return;
+    if(afterEl==null) els.stackList.appendChild(dragging);
+    else els.stackList.insertBefore(dragging,afterEl);
+  });
+
+  els.stackList.addEventListener("drop",e=>{
+    e.preventDefault();
+    saveToHistory();
+    const ids=[...els.stackList.querySelectorAll("li")].map(li=>li.dataset.id);
+    const map=new Map(state.stack.map(x=>[x.id,x]));
+    state.stack = ids.map(id=>map.get(id)).filter(Boolean);
+    renderStack();
+    buildOutput();
+    saveLocal();
+    showToast("Reordered", "success");
+    announce("Arrangement reordered");
+  });
+
+  function getDragAfterElement(container,y){
+    const items=[...container.querySelectorAll("li:not(.dragging)")];
+    return items.reduce((closest,child)=>{
+      const box=child.getBoundingClientRect();
+      const offset=y-box.top-box.height/2;
+      if(offset<0 && offset>closest.offset) return {offset,element:child};
+      return closest;
+    },{offset:Number.NEGATIVE_INFINITY,element:null}).element;
+  }
+}
+
+// -------------------------
+// Output builder
+// -------------------------
+function outputLabelForBase(base){
+  const name=BASE_LABELS[base]||base;
+  return "["+name+"]";
+}
+
+function sectionBlock(base,text,forceLabelEvenIfEmpty=false){
+  const opt=state.options;
+  let t=text||"";
+  if(opt.sanitize) t=sanitizeText(t);
+  if(opt.trim) t=trimAndClampBlankLines(t,Number(opt.maxBlank));
+
+  const hasText=t && t.trim().length>0;
+  const label = opt.labels ? (outputLabelForBase(base)+"\n") : "";
+
+  if(!hasText && !forceLabelEvenIfEmpty) return "";
+  if(!hasText && forceLabelEvenIfEmpty) return label.trimEnd();
+
+  return label + t;
+}
+
+function buildOutput(){
+  const opt=state.options;
+  const parts=[];
+
+  let stackItems=state.stack.slice();
+  if(opt.wrapIntroOutro){
+    stackItems = stackItems.filter(it=>{
+      const d=defByKey(it.key);
+      if(!d) return true;
+      return d.base!=="intro" && d.base!=="outro";
+    });
+  }
+
+  if(opt.wrapIntroOutro) parts.push(sectionBlock("intro",state.sections.intro||"",true));
+
+  for(const item of stackItems){
+    const d=defByKey(item.key);
+    if(!d) continue;
+    const text=state.sections[item.key]||"";
+    const block=sectionBlock(d.base,text,false);
+    if(block) parts.push(block);
+  }
+
+  if(opt.wrapIntroOutro) parts.push(sectionBlock("outro",state.sections.outro||"",true));
+
+  const joiner = opt.blankLine ? "\n\n" : "\n";
+  let out = parts.filter(Boolean).join(joiner);
+
+  if(opt.trim) out = trimAndClampBlankLines(out,Number(opt.maxBlank));
+  els.output.value = out;
+}
+
+// -------------------------
+// Word tools
+// -------------------------
+function getSelectedWord(){
+  if(!activeTextarea) return "";
+  const start=activeTextarea.selectionStart;
+  const end=activeTextarea.selectionEnd;
+  if(start===end) return "";
+  const sel=activeTextarea.value.substring(start,end).trim();
+  return sel.split(/\s+/)[0].replace(/^[^a-zA-Z]+|[^a-zA-Z]+$/g,"");
+}
+
+async function datamuseQuery(mode,word){
+  const q=encodeURIComponent(word);
+  const max=24;
+  let url="https://api.datamuse.com/words?max="+max;
+  if(mode==="ml") url+="&ml="+q;
+  else if(mode==="sl") url+="&sl="+q;
+  else if(mode==="rel_nry") url+="&rel_nry="+q;
+  else url+="&rel_rhy="+q;
+  const res=await fetch(url);
+  if(!res.ok) throw new Error("fetch failed");
+  return await res.json();
+}
+
+function renderToolResults(items){
+  els.toolResults.innerHTML="";
+  if(!items || items.length===0){
+    const div=document.createElement("div");
+    div.className="small";
+    div.textContent="No results.";
+    els.toolResults.appendChild(div);
+    return;
+  }
+  for(const it of items){
+    const w=it.word||"";
+    if(!w) continue;
+    const pill=document.createElement("div");
+    pill.className="pill";
+    pill.setAttribute("role", "option");
+    pill.setAttribute("tabindex", "0");
+    const left=document.createElement("div"); left.textContent=w;
+    const right=document.createElement("div"); right.className="meta";
+    right.textContent=(typeof it.numSyllables==="number")?(it.numSyllables+" syll"):"";
+    pill.appendChild(left); pill.appendChild(right);
+    pill.addEventListener("click",()=>insertAtCursor(w));
+    pill.addEventListener("keydown",(e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); insertAtCursor(w); }});
+    els.toolResults.appendChild(pill);
+  }
+}
+
+function insertAtCursor(text){
+  if(!activeTextarea){ showToast("Click a section textarea first", "error"); return; }
+  const ta=activeTextarea;
+  const start=ta.selectionStart;
+  const end=ta.selectionEnd;
+  const before=ta.value.substring(0,start);
+  const after=ta.value.substring(end);
+  const needsSpaceBefore = before && !/[\s\n]$/.test(before);
+  const needsSpaceAfter = after && !/^[\s\n]/.test(after);
+  const insert=(needsSpaceBefore?" ":"") + text + (needsSpaceAfter?" ":"");
+  
+  saveToHistory();
+  ta.value = before + insert + after;
+  const newPos=(before+insert).length;
+  ta.selectionStart=ta.selectionEnd=newPos;
+  ta.focus();
+
+  const key=ta.id.replace("sec_","");
+  state.sections[key]=ta.value;
+  updateSectionMeta(key);
+  updateGroupMeta();
+  buildOutput();
+  saveLocal();
+  showToast("Inserted: " + text, "success");
+}
+
+function wireWordTools(){
+  els.useSelectionBtn.addEventListener("click",()=>{
+    const w=getSelectedWord();
+    if(!w){ showToast("No selection found", "error"); return; }
+    els.toolQuery.value=w;
+    showToast("Selection loaded", "info");
+  });
+  els.toolClearBtn.addEventListener("click",()=>{
+    els.toolQuery.value="";
+    els.toolResults.innerHTML="";
+    showToast("Cleared", "info");
+  });
+  els.toolSearchBtn.addEventListener("click",async ()=>{
+    const word=(els.toolQuery.value||"").trim();
+    if(!word){ showToast("Type a word", "error"); return; }
+    const mode=els.toolMode.value;
+    els.toolResults.innerHTML="<div class='small loading'>Searching…</div>";
+    try{
+      const items=await datamuseQuery(mode,word);
+      renderToolResults(items);
+      showToast("Results ready", "success");
+    }catch(e){
+      els.toolResults.innerHTML="<div class='small'>Fetch failed. (Offline? Blocked?)</div>";
+      showToast("Fetch failed", "error");
+    }
+  });
+}
+
+// -------------------------
+// Song ID
+// -------------------------
+function generateTimestamp(){
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const yyyy=d.getFullYear();
+  const mm=pad(d.getMonth()+1);
+  const dd=pad(d.getDate());
+  const hh=pad(d.getHours());
+  const mi=pad(d.getMinutes());
+  return `${yyyy}${mm}${dd}${hh}${mi}`;
+}
+
+function wireSongMeta(){
+  els.songTitle.value = state.songTitle || "";
+  els.songId.value = state.songId || "";
+
+  els.songTitle.addEventListener("input",()=>{
+    state.songTitle = els.songTitle.value;
+    saveLocal();
+  });
+  
+  els.songTitle.addEventListener("blur",()=>{
+    saveToHistory();
+  });
+
+  els.genIdBtn.addEventListener("click",()=>{
+    const title=(els.songTitle.value||"").trim();
+    const stamp=generateTimestamp();
+    const id=(title? (stamp+" "+title) : stamp);
+    saveToHistory();
+    state.songTitle = title;
+    state.songId = id;
+    els.songId.value = id;
+    saveLocal();
+    showToast("Song ID generated", "success");
+  });
+
+  els.copyIdBtn.addEventListener("click",async ()=>{
+    const t=(els.songId.value||"").trim();
+    if(!t){ showToast("No Song ID yet", "error"); return; }
+    const ok=await copyToClipboard(t);
+    showToast(ok?"Copied ID":"Copy failed",ok?"success":"error");
+  });
+}
+
+// -------------------------
+// Style chips
+// -------------------------
+function normalizeTag(tag){
+  return (tag||"").trim().replace(/\s+/g," ");
+}
+
+function uniqCaseInsensitive(list){
+  const seen=new Set();
+  const out=[];
+  for(const item of list){
+    const key=item.toLowerCase();
+    if(seen.has(key)) continue;
+    seen.add(key);
+    out.push(item);
+  }
+  return out;
+}
+
+function setStyleString(){
+  const s = (state.styleSelected||[]).join(", ");
+  els.styleString.value = s;
+}
+
+function toggleTag(tag){
+  tag=normalizeTag(tag);
+  if(!tag) return;
+  saveToHistory();
+  const current=state.styleSelected||[];
+  const idx=current.findIndex(t=>t.toLowerCase()===tag.toLowerCase());
+  if(idx>=0) current.splice(idx,1);
+  else current.push(tag);
+  state.styleSelected = uniqCaseInsensitive(current);
+  setStyleString();
+  renderStyle();
+  saveLocal();
+}
+
+function renderStyle(){
+  els.styleSelected.innerHTML="";
+  for(const tag of (state.styleSelected||[])){
+    const chip=document.createElement("div");
+    chip.className="chip on";
+    chip.setAttribute("role", "option");
+    chip.setAttribute("tabindex", "0");
+    chip.innerHTML = `<span>${tag}</span><span class='x'>×</span>`;
+    chip.title="Tap to remove";
+    chip.addEventListener("click",()=>toggleTag(tag));
+    chip.addEventListener("keydown",(e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleTag(tag); }});
+    els.styleSelected.appendChild(chip);
+  }
+
+  els.styleLibrary.innerHTML="";
+  const selectedLower = new Set((state.styleSelected||[]).map(t=>t.toLowerCase()));
+  for(const tag of styleLibrary){
+    const on = selectedLower.has(tag.toLowerCase());
+    const chip=document.createElement("div");
+    chip.className = "chip" + (on?" on":"");
+    chip.setAttribute("role", "option");
+    chip.setAttribute("tabindex", "0");
+    chip.textContent=tag;
+    chip.title=on?"Tap to remove":"Tap to add";
+    chip.addEventListener("click",()=>toggleTag(tag));
+    chip.addEventListener("keydown",(e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleTag(tag); }});
+    els.styleLibrary.appendChild(chip);
+  }
+}
+
+function wireStyle(){
+  state.styleSelected = Array.isArray(state.styleSelected) ? state.styleSelected : [];
+  styleLibrary = Array.isArray(styleLibrary) ? styleLibrary : [];
+  styleLibrary = uniqCaseInsensitive(styleLibrary.concat(state.styleSelected));
+  setStyleString();
+  renderStyle();
+
+  function addFromInput(){
+    const tag=normalizeTag(els.styleInput.value);
+    if(!tag) return;
+    saveToHistory();
+    if(!styleLibrary.some(t=>t.toLowerCase()===tag.toLowerCase())) styleLibrary.push(tag);
+    if(!(state.styleSelected||[]).some(t=>t.toLowerCase()===tag.toLowerCase())) state.styleSelected.push(tag);
+    state.styleSelected = uniqCaseInsensitive(state.styleSelected);
+    styleLibrary = uniqCaseInsensitive(styleLibrary);
+    els.styleInput.value="";
+    setStyleString();
+    renderStyle();
+    saveLocal();
+    showToast("Style added", "success");
+  }
+
+  els.addStyleBtn.addEventListener("click",addFromInput);
+  els.styleInput.addEventListener("keydown",e=>{ if(e.key==="Enter") { e.preventDefault(); addFromInput(); } });
+
+  els.clearStyleBtn.addEventListener("click",()=>{
+    saveToHistory();
+    state.styleSelected=[];
+    setStyleString();
+    renderStyle();
+    saveLocal();
+    showToast("Selection cleared", "info");
+  });
+
+  els.copyStyleBtn.addEventListener("click",async ()=>{
+    const t=(els.styleString.value||"").trim();
+    if(!t){ showToast("No style selected", "error"); return; }
+    const ok=await copyToClipboard(t);
+    showToast(ok?"Copied style":"Copy failed",ok?"success":"error");
+  });
+}
+
+// -------------------------
+// JSON Save/Load
+// -------------------------
+function currentExportObject(){
+  const nowIso = new Date().toISOString();
+  const outputSnapshot = els.output.value || "";
+  return {
+    version: 4,
+    exportedAt: nowIso,
+    songTitle: state.songTitle || "",
+    songId: state.songId || "",
+    styleSelected: state.styleSelected || [],
+    styleLibrary: styleLibrary || [],
+    sections: state.sections || {},
+    stack: state.stack || [],
+    options: state.options || {},
+    outputSnapshot: outputSnapshot
+  };
+}
+
+function applyImportObject(obj){
+  if(!obj || typeof obj !== "object") return false;
+  if(!obj.sections || !obj.stack || !obj.options) return false;
+
+  state.songTitle = obj.songTitle || "";
+  state.songId = obj.songId || "";
+  state.sections = {...blankSections(), ...(obj.sections||{})};
+  state.stack = Array.isArray(obj.stack) ? obj.stack : [];
+  state.options = {...state.options, ...(obj.options||{})};
+  state.styleSelected = Array.isArray(obj.styleSelected) ? obj.styleSelected : [];
+
+  if(Array.isArray(obj.styleLibrary)) styleLibrary = uniqCaseInsensitive(styleLibrary.concat(obj.styleLibrary));
+  styleLibrary = uniqCaseInsensitive(styleLibrary.concat(state.styleSelected));
+
+  state.stack = state.stack.map(it=>({id: it.id || crypto.randomUUID(), key: it.key})).filter(it=>it.key);
+
+  return true;
+}
+
+function wireJson(){
+  els.saveJsonBtn.addEventListener("click",()=>{
+    const obj=currentExportObject();
+    const json=JSON.stringify(obj,null,2);
+    const idForName = (state.songId || (generateTimestamp()+" "+(state.songTitle||"Untitled"))).trim();
+    const fileName = safeFilename(idForName) + ".json";
+
+    const blob=new Blob([json],{type:"application/json;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download=fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast("Saved JSON", "success");
+  });
+
+  els.loadJsonBtn.addEventListener("click",()=>{
+    els.jsonFile.value="";
+    els.jsonFile.click();
+  });
+
+  els.jsonFile.addEventListener("change",async ()=>{
+    const f=els.jsonFile.files && els.jsonFile.files[0];
+    if(!f) return;
+    try{
+      const text=await f.text();
+      const obj=JSON.parse(text);
+      saveToHistory();
+      const ok=applyImportObject(obj);
+      if(!ok){ showToast("Invalid JSON", "error"); return; }
+
+      refreshUI();
+      showToast("Loaded JSON", "success");
+      announce("JSON file loaded successfully");
+    }catch(e){
+      showToast("Load failed", "error");
+    }
+  });
+}
+
+// -------------------------
+// Other events
+// -------------------------
+function wireOptions(){
+  const optChanged=()=>{
+    state.options.labels=els.optLabels.checked;
+    state.options.wrapIntroOutro=els.optWrap.checked;
+    state.options.blankLine=els.optBlankLine.checked;
+    state.options.sanitize=els.optSanitize.checked;
+    state.options.trim=els.optTrim.checked;
+    state.options.maxBlank=Number(els.optMaxBlank.value||1);
+    buildOutput();
+    saveLocal();
+  };
+  els.optLabels.addEventListener("change",optChanged);
+  els.optWrap.addEventListener("change",optChanged);
+  els.optBlankLine.addEventListener("change",optChanged);
+  els.optSanitize.addEventListener("change",optChanged);
+  els.optTrim.addEventListener("change",optChanged);
+  els.optMaxBlank.addEventListener("input",optChanged);
+}
+
+function wireReset(){
+  els.clearStackBtn.addEventListener("click",()=>{
+    saveToHistory();
+    state.stack=[];
+    renderStack();
+    buildOutput();
+    saveLocal();
+    showToast("Stack cleared", "info");
+    announce("Arrangement stack cleared");
+  });
+
+  els.clearSectionsBtn.addEventListener("click",()=>{
+    saveToHistory();
+    for(const d of SECTION_DEFS){
+      state.sections[d.key]="";
+      const ta=document.getElementById("sec_"+d.key);
+      if(ta) ta.value="";
+      updateSectionMeta(d.key);
+    }
+    updateGroupMeta();
+    buildOutput();
+    saveLocal();
+    showToast("Text cleared", "info");
+    announce("All section text cleared");
+  });
+
+  els.resetAllBtn.addEventListener("click",()=>{
+    if(!confirm("Reset everything to defaults? This cannot be undone.")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    undoStack = [];
+    redoStack = [];
+    state = {version:4,songTitle:"",songId:"",styleSelected:[],sections:blankSections(),stack:[{id:crypto.randomUUID(),key:"verse_a"},{id:crypto.randomUUID(),key:"chorus_a"}],options:{labels:true,wrapIntroOutro:true,blankLine:true,sanitize:true,trim:true,maxBlank:1}};
+
+    refreshUI();
+    updateUndoRedoButtons();
+    showToast("Reset complete", "info");
+    announce("All data reset to defaults");
+  });
+}
+
+function wireExport(){
+  els.copyLyricsBtn.addEventListener("click",async ()=>{
+    const t=els.output.value || "";
+    if(!t.trim()){ showToast("No lyrics", "error"); return; }
+    const ok=await copyToClipboard(t);
+    showToast(ok?"Copied lyrics":"Copy failed",ok?"success":"error");
+  });
+
+  els.downloadTxtBtn.addEventListener("click",()=>{
+    const text=els.output.value || "";
+    const idForName = (state.songId || (generateTimestamp()+" "+(state.songTitle||"Untitled"))).trim();
+    const fileName = safeFilename(idForName) + ".txt";
+    const blob=new Blob([text],{type:"text/plain;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download=fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast("Downloaded .txt", "success");
+  });
+}
+
+// -------------------------
+// Keyboard Shortcuts
+// -------------------------
+function wireKeyboardShortcuts(){
+  document.addEventListener("keydown", (e) => {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const modKey = isMac ? e.metaKey : e.ctrlKey;
+    
+    // Ctrl/Cmd + S = Save JSON
+    if(modKey && e.key === "s"){
+      e.preventDefault();
+      els.saveJsonBtn.click();
+    }
+    
+    // Ctrl/Cmd + Z = Undo
+    if(modKey && !e.shiftKey && e.key === "z"){
+      e.preventDefault();
+      undo();
+    }
+    
+    // Ctrl/Cmd + Shift + Z = Redo
+    if(modKey && e.shiftKey && e.key === "z"){
+      e.preventDefault();
+      redo();
+    }
+    
+    // Ctrl/Cmd + Y = Redo (alternative)
+    if(modKey && e.key === "y"){
+      e.preventDefault();
+      redo();
+    }
+  });
+}
+
+function wireUndoRedo(){
+  els.undoBtn.addEventListener("click", undo);
+  els.redoBtn.addEventListener("click", redo);
+}
+
+// -------------------------
+// Init
+// -------------------------
+loadLocal();
+
+els.songTitle.value = state.songTitle || "";
+els.songId.value = state.songId || "";
+
+els.optLabels.checked=!!state.options.labels;
+els.optWrap.checked=!!state.options.wrapIntroOutro;
+els.optBlankLine.checked=!!state.options.blankLine;
+els.optSanitize.checked=!!state.options.sanitize;
+els.optTrim.checked=!!state.options.trim;
+els.optMaxBlank.value=Number(state.options.maxBlank ?? 1);
+
+buildSectionEditors();
+buildAddButtons();
+buildPresetSelect();
+renderStack();
+buildOutput();
+
+wireDragContainer();
+wireWordTools();
+wireSongMeta();
+wireStyle();
+wireJson();
+wireOptions();
+wireReset();
+wireExport();
+wireUndoRedo();
+wireKeyboardShortcuts();
+updateUndoRedoButtons();
+
+document.addEventListener("focusin",(e)=>{
+  const t=e.target;
+  if(t && t.tagName==="TEXTAREA") activeTextarea=t;
+});
+
+// Initial history snapshot
+saveToHistory();
+</script>
+
+
+</body></html>
