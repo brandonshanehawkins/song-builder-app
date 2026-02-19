@@ -14,6 +14,6 @@
 
 ---
 
-## [Song Builder 3.2](https://brandonshanehawkins.github.io/song-builder-app/does-it.md)
+## [Does It?](https://brandonshanehawkins.github.io/song-builder-app/does-it.md)
 
 ---
